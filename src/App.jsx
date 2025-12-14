@@ -4,7 +4,7 @@ function App() {
   return (
     <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-white mb-8">Hello LPT Team</h1>
+        <h1 className="text-4xl font-bold text-white mb-8">Hello AwesomeLPT Team</h1>
         <div className="flex flex-col gap-4">
           <Link 
             to="/biller-product" 
