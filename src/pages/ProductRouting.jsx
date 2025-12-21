@@ -59,29 +59,69 @@ function generateId() {
 }
 
 function AddRoutingModal({ isOpen, onClose, onSave, productCode, existingRoutings }) {
-  const [selectedBillerProductId, setSelectedBillerProductId] = useState('')
+  const [billerProductCode, setBillerProductCode] = useState('')
+  const [isChecking, setIsChecking] = useState(false)
+  const [productDetails, setProductDetails] = useState(null)
+  const [checkError, setCheckError] = useState('')
 
   // Filter out biller products that are already in the routing
   const existingBillerProductCodes = existingRoutings.map(r => r.biller_product_code)
-  const availableProducts = availableBillerProducts.filter(
-    bp => !existingBillerProductCodes.includes(bp.biller_product_code)
-  )
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedBillerProductId('')
+      setBillerProductCode('')
+      setProductDetails(null)
+      setCheckError('')
     }
   }, [isOpen])
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const selectedProduct = availableBillerProducts.find(bp => bp.id === selectedBillerProductId)
-    if (selectedProduct) {
-      onSave(selectedProduct)
-    }
+  const handleCodeChange = (e) => {
+    setBillerProductCode(e.target.value)
+    // Reset product details when code changes
+    setProductDetails(null)
+    setCheckError('')
   }
 
-  const selectedProduct = availableBillerProducts.find(bp => bp.id === selectedBillerProductId)
+  const handleCheckProduct = async () => {
+    if (!billerProductCode.trim()) {
+      setCheckError('Please enter a biller product code')
+      return
+    }
+
+    setIsChecking(true)
+    setCheckError('')
+    setProductDetails(null)
+
+    // Simulate API call - will be replaced with actual API later
+    setTimeout(() => {
+      // Check if the code exists in available biller products
+      const foundProduct = availableBillerProducts.find(
+        bp => bp.biller_product_code.toLowerCase() === billerProductCode.trim().toLowerCase()
+      )
+
+      if (foundProduct) {
+        // Check if already exists in routing
+        if (existingBillerProductCodes.includes(foundProduct.biller_product_code)) {
+          setCheckError('This biller product is already in the routing')
+          setProductDetails(null)
+        } else {
+          setProductDetails(foundProduct)
+          setCheckError('')
+        }
+      } else {
+        setCheckError('Biller product not found')
+        setProductDetails(null)
+      }
+      setIsChecking(false)
+    }, 500)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (productDetails) {
+      onSave(productDetails)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -97,38 +137,72 @@ function AddRoutingModal({ isOpen, onClose, onSave, productCode, existingRouting
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-white">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Select Biller Product</label>
-            <select
-              value={selectedBillerProductId}
-              onChange={(e) => setSelectedBillerProductId(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
-            >
-              <option value="">-- Select a biller product --</option>
-              {availableProducts.map(bp => (
-                <option key={bp.id} value={bp.id}>
-                  {bp.biller_product_code} - Rp {formatPrice(bp.price)}
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Biller Product Code</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={billerProductCode}
+                onChange={handleCodeChange}
+                placeholder="Enter biller product code..."
+                className="flex-1 px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+              />
+              <button
+                type="button"
+                onClick={handleCheckProduct}
+                disabled={isChecking || !billerProductCode.trim()}
+                className={`px-4 py-2.5 rounded-md font-medium transition-all flex items-center gap-2 ${
+                  isChecking || !billerProductCode.trim()
+                    ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isChecking ? (
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                Check
+              </button>
+            </div>
+            {checkError && (
+              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {checkError}
+              </p>
+            )}
           </div>
 
-          {selectedProduct && (
-            <div className="p-4 bg-neutral-50 rounded-md border border-neutral-200">
-              <h4 className="text-sm font-medium text-neutral-700 mb-2">Selected Product Details</h4>
+          {/* Product Details (shown when found) */}
+          {productDetails && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium text-green-800">Product Found</span>
+              </div>
               <div className="space-y-1 text-sm">
-                <p className="text-neutral-600">
-                  <span className="text-neutral-500">Code:</span> {selectedProduct.biller_product_code}
-                </p>
-                <p className="text-neutral-600">
-                  <span className="text-neutral-500">Biller Price:</span> Rp {formatPrice(selectedProduct.price)}
-                </p>
-                <p className="text-neutral-600">
-                  <span className="text-neutral-500">Status:</span>{' '}
-                  <span className={selectedProduct.status === 'active' ? 'text-green-600' : 'text-red-600'}>
-                    {selectedProduct.status}
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Code:</span>
+                  <span className="font-medium text-neutral-800">{productDetails.biller_product_code}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Biller Price:</span>
+                  <span className="font-medium text-neutral-800">Rp {formatPrice(productDetails.price)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Status:</span>
+                  <span className={`font-medium ${productDetails.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                    {productDetails.status}
                   </span>
-                </p>
+                </div>
               </div>
             </div>
           )}
@@ -143,9 +217,9 @@ function AddRoutingModal({ isOpen, onClose, onSave, productCode, existingRouting
             </button>
             <button
               type="submit"
-              disabled={!selectedBillerProductId}
+              disabled={!productDetails}
               className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all ${
-                selectedBillerProductId
+                productDetails
                   ? 'bg-neutral-800 text-white hover:bg-neutral-900'
                   : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
               }`}

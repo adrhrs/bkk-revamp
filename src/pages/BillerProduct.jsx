@@ -6,6 +6,7 @@ const initialBillerProducts = [
     id: '019b071f-a5ca-766f-b8a9-1fc8add48b1b',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLOWDP-S1',
+    product_code: 'MLBB100',
     price: 2325600,
     status: 'active',
     disturbance_level: '',
@@ -17,6 +18,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c9-702c-b9d8-dc9d5325510c',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLOTL-S1',
+    product_code: 'MLBB500',
     price: 12127500,
     status: 'active',
     disturbance_level: '',
@@ -28,6 +30,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c7-78fe-a425-8ca4d4a94ef8',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO7740_1548-S1',
+    product_code: 'FF70',
     price: 183799700,
     status: 'active',
     disturbance_level: '',
@@ -39,6 +42,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c6-72be-9585-1509ac475ba6',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO7740_1548-S117',
+    product_code: 'FF70',
     price: 194956900,
     status: 'active',
     disturbance_level: '',
@@ -50,6 +54,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c4-7922-8bbe-1792c6f68589',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO7740_1548-S10',
+    product_code: 'FF50',
     price: 168030300,
     status: 'non_active',
     disturbance_level: '',
@@ -61,6 +66,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c3-7239-970f-b50711bd4877',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO4649_883-S1',
+    product_code: '8BP110',
     price: 110281500,
     status: 'active',
     disturbance_level: '',
@@ -72,6 +78,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c1-7c86-9529-4f69a859f92e',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO4649_883-S117',
+    product_code: '8BP110',
     price: 116972800,
     status: 'active',
     disturbance_level: '',
@@ -83,6 +90,7 @@ const initialBillerProducts = [
     id: '019b071f-a5c0-7717-8f9f-2b5dc22f3ad4',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO4649_883-S10',
+    product_code: '',
     price: 100818200,
     status: 'non_active',
     disturbance_level: '',
@@ -94,6 +102,7 @@ const initialBillerProducts = [
     id: '019b071f-a5bf-7245-9b51-53b48af3bb97',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO3099_589-S1',
+    product_code: '',
     price: 73518200,
     status: 'active',
     disturbance_level: '',
@@ -105,6 +114,7 @@ const initialBillerProducts = [
     id: '019b071f-a5bd-7bbc-9a89-2f44e5feae6c',
     biller_code: 'lapak_gaming',
     biller_product_code: 'MLBBGLO3099_589-S117',
+    product_code: '',
     price: 77980800,
     status: 'active',
     disturbance_level: '',
@@ -168,6 +178,7 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
   const [formData, setFormData] = useState({
     biller_code: 'lapak_gaming',
     biller_product_code: '',
+    product_code: '',
     price: '',
     status: 'non_active',
     currency: 'IDR',
@@ -178,6 +189,7 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
       setFormData({
         biller_code: product?.biller_code || 'lapak_gaming',
         biller_product_code: product?.biller_product_code || '',
+        product_code: product?.product_code || '',
         price: product?.price || '',
         status: product?.status || 'non_active',
         currency: 'IDR',
@@ -250,6 +262,22 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
               required
               className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
             />
+          </div>
+
+          {/* Product (Routing) */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+              Product
+            </label>
+            <input
+              type="text"
+              name="product_code"
+              value={formData.product_code}
+              onChange={handleChange}
+              placeholder="product code"
+              className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+            />
+            <p className="mt-1 text-xs text-neutral-500">Link this biller product to a product for routing</p>
           </div>
 
           {/* Price */}
@@ -699,7 +727,7 @@ function BillerProduct() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
-              Create Product
+              Create Biller Product
             </button>
           </div>
         </div>
@@ -781,6 +809,7 @@ function BillerProduct() {
                   <SortableHeader label="id" field="id" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="biller_code" field="biller_code" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="biller_product_code" field="biller_product_code" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="product_code" field="product_code" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="price" field="price" sortConfig={sortConfig} onSort={handleSort} align="right" />
                   <SortableHeader label="status" field="status" sortConfig={sortConfig} onSort={handleSort} />
                   <th className="text-left px-4 py-3 font-medium text-neutral-600">disturbance_level</th>
@@ -792,7 +821,7 @@ function BillerProduct() {
               <tbody>
                 {filteredAndSortedProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-8 text-center text-neutral-500">
+                    <td colSpan={11} className="px-4 py-8 text-center text-neutral-500">
                       No products found matching your filters.
                     </td>
                   </tr>
@@ -823,6 +852,7 @@ function BillerProduct() {
                       <td className="px-4 py-3 text-neutral-600 font-mono text-xs">{product.id}</td>
                       <td className="px-4 py-3 text-neutral-700">{product.biller_code}</td>
                       <td className="px-4 py-3 text-neutral-700">{product.biller_product_code}</td>
+                      <td className="px-4 py-3 text-neutral-700">{product.product_code || '-'}</td>
                       <td className="px-4 py-3 text-right text-neutral-800 tabular-nums font-medium">
                         {formatPrice(product.price)}
                       </td>
