@@ -869,6 +869,7 @@ function Product() {
                 <tr className="bg-neutral-50 border-b border-neutral-200">
                   <th className="text-left px-4 py-3 font-medium text-neutral-600">Actions</th>
                   <SortableHeader label="id" field="id" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="code" field="code" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="category_name" field="category_name" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="brand_name" field="brand_name" sortConfig={sortConfig} onSort={handleSort} />
                   <th className="text-left px-4 py-3 font-medium text-neutral-600">description</th>
@@ -882,7 +883,6 @@ function Product() {
                   <SortableHeader label="status" field="status" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="created_at" field="created_at" sortConfig={sortConfig} onSort={handleSort} />
                   <th className="text-left px-4 py-3 font-medium text-neutral-600">updated_at</th>
-                  <SortableHeader label="code" field="code" sortConfig={sortConfig} onSort={handleSort} />
                   <th className="text-left px-4 py-3 font-medium text-neutral-600">currency</th>
                 </tr>
               </thead>
@@ -924,6 +924,7 @@ function Product() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-neutral-600 font-mono text-xs">{product.id}</td>
+                      <td className="px-4 py-3 text-neutral-700">{product.code}</td>
                       <td className="px-4 py-3 text-neutral-700">{product.category_name}</td>
                       <td className="px-4 py-3 text-neutral-700">{product.brand_name}</td>
                       <td className="px-4 py-3 text-neutral-700">{product.description}</td>
@@ -942,7 +943,6 @@ function Product() {
                       </td>
                       <td className="px-4 py-3 text-neutral-500 whitespace-nowrap">{product.created_at}</td>
                       <td className="px-4 py-3 text-neutral-500 whitespace-nowrap">{product.updated_at || '-'}</td>
-                      <td className="px-4 py-3 text-neutral-700">{product.code}</td>
                       <td className="px-4 py-3 text-neutral-500">{product.currency}</td>
                     </tr>
                   ))

@@ -11,6 +11,7 @@ import ClientProduct from './pages/ClientProduct'
 import GGSProduct from './pages/GGSProduct'
 import GGSItem from './pages/GGSItem'
 import GGSItemRouting from './pages/GGSItemRouting'
+import UpcomingBillerProduct from './pages/UpcomingBillerProduct'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('app')).render(
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById('app')).render(
         <Route path="/ggs-product" element={<GGSProduct />} />
         <Route path="/ggs-item" element={<GGSItem />} />
         <Route path="/ggs-item-routing" element={<GGSItemRouting />} />
+        <Route path="/upcoming-biller-product" element={<UpcomingBillerProduct />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

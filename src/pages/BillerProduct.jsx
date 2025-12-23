@@ -174,6 +174,23 @@ function SortableHeader({ label, field, sortConfig, onSort, align = 'left' }) {
   )
 }
 
+// Sample products data - simulating available products to map to
+const availableProducts = [
+  { code: '8BP110', price: 9561000, status: 'non_active' },
+  { code: 'FF50', price: 621100, status: 'active' },
+  { code: '8BP112000', price: 9561000, status: 'non_active' },
+  { code: '8BP15STS', price: 4634200, status: 'non_active' },
+  { code: '8BP20', price: 1909900, status: 'non_active' },
+  { code: '8BP20000', price: 1909900, status: 'non_active' },
+  { code: 'FFMINGGUAN', price: 2587900, status: 'active' },
+  { code: 'FFBPC', price: 3881800, status: 'active' },
+  { code: '8BP250', price: 19124800, status: 'non_active' },
+  { code: '8BP256000', price: 19124800, status: 'non_active' },
+  { code: 'FF70', price: 840000, status: 'active' },
+  { code: 'MLBB100', price: 2500000, status: 'active' },
+  { code: 'MLBB500', price: 12500000, status: 'active' },
+]
+
 function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
   const [formData, setFormData] = useState({
     biller_code: 'lapak_gaming',
@@ -183,6 +200,12 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
     status: 'non_active',
     currency: 'IDR',
   })
+
+  // Product lookup state
+  const [productCodeInput, setProductCodeInput] = useState('')
+  const [isCheckingProduct, setIsCheckingProduct] = useState(false)
+  const [productDetails, setProductDetails] = useState(null)
+  const [checkError, setCheckError] = useState('')
 
   useEffect(() => {
     if (isOpen) {
@@ -194,6 +217,19 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
         status: product?.status || 'non_active',
         currency: 'IDR',
       })
+      // Reset product lookup state
+      setProductCodeInput(product?.product_code || '')
+      setProductDetails(null)
+      setCheckError('')
+      // If editing and has product_code, show it as already verified
+      if (product?.product_code) {
+        const foundProduct = availableProducts.find(
+          p => p.code.toLowerCase() === product.product_code.toLowerCase()
+        )
+        if (foundProduct) {
+          setProductDetails(foundProduct)
+        }
+      }
     }
   }, [isOpen, product])
 
@@ -203,6 +239,54 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
       ...prev,
       [name]: name === 'price' ? (value === '' ? '' : Number(value)) : value
     }))
+  }
+
+  const handleProductCodeInputChange = (e) => {
+    setProductCodeInput(e.target.value)
+    setProductDetails(null)
+    setCheckError('')
+    // Clear the product_code in formData when input changes
+    setFormData(prev => ({ ...prev, product_code: '' }))
+  }
+
+  const handleCheckProduct = async () => {
+    if (!productCodeInput.trim()) {
+      setCheckError('Please enter a product code')
+      return
+    }
+
+    setIsCheckingProduct(true)
+    setCheckError('')
+    setProductDetails(null)
+
+    // Simulate API call
+    setTimeout(() => {
+      const foundProduct = availableProducts.find(
+        p => p.code.toLowerCase() === productCodeInput.trim().toLowerCase()
+      )
+
+      if (foundProduct) {
+        setProductDetails(foundProduct)
+        setCheckError('')
+      } else {
+        setCheckError('Product not found')
+        setProductDetails(null)
+      }
+      setIsCheckingProduct(false)
+    }, 500)
+  }
+
+  const handleAddProduct = () => {
+    if (productDetails) {
+      setFormData(prev => ({ ...prev, product_code: productDetails.code }))
+    }
+  }
+
+  const handleRemoveProduct = () => {
+    setFormData(prev => ({ ...prev, product_code: '' }))
+    setProductCodeInput('')
+    setProductDetails(null)
+    setCheckError('')
   }
 
   const handleSubmit = (e) => {
@@ -221,9 +305,9 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-neutral-200">
+      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-neutral-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-neutral-800 px-6 py-4">
+        <div className="bg-neutral-800 px-6 py-4 sticky top-0">
           <h2 className="text-xl font-semibold text-neutral-100">
             {mode === 'create' ? 'Create Biller Product' : 'Edit Biller Product'}
           </h2>
@@ -262,22 +346,6 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
               required
               className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
             />
-          </div>
-
-          {/* Product (Routing) */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-              Product
-            </label>
-            <input
-              type="text"
-              name="product_code"
-              value={formData.product_code}
-              onChange={handleChange}
-              placeholder="product code"
-              className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
-            />
-            <p className="mt-1 text-xs text-neutral-500">Link this biller product to a product for routing</p>
           </div>
 
           {/* Price */}
@@ -326,6 +394,136 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
             />
           </div>
 
+          {/* Separator */}
+          <hr className="border-neutral-200" />
+
+          {/* Product Mapping Section */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+              Map to Product {mode === 'create' && <span className="text-red-500">*</span>}
+            </label>
+            <p className="text-xs text-neutral-500 mb-3">Link this biller product to a product for routing</p>
+            
+            {formData.product_code ? (
+              // Show selected product
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium text-green-800">Product Mapped</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveProduct}
+                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Product Code:</span>
+                    <span className="font-medium text-neutral-800">{formData.product_code}</span>
+                  </div>
+                  {productDetails && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Price:</span>
+                        <span className="font-medium text-neutral-800">{formatPrice(productDetails.price)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Status:</span>
+                        <span className={`font-medium ${productDetails.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                          {productDetails.status}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Show product lookup form
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={productCodeInput}
+                    onChange={handleProductCodeInputChange}
+                    placeholder="Enter product code..."
+                    className="flex-1 px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCheckProduct}
+                    disabled={isCheckingProduct || !productCodeInput.trim()}
+                    className={`px-4 py-2.5 rounded-md font-medium transition-all flex items-center gap-2 ${
+                      isCheckingProduct || !productCodeInput.trim()
+                        ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {isCheckingProduct ? (
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    Check
+                  </button>
+                </div>
+                {checkError && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {checkError}
+                  </p>
+                )}
+
+                {/* Product Details (shown when found) */}
+                {productDetails && !formData.product_code && (
+                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-medium text-green-800">Product Found</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Product Code:</span>
+                        <span className="font-medium text-neutral-800">{productDetails.code}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Price:</span>
+                        <span className="font-medium text-neutral-800">{formatPrice(productDetails.price)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Status:</span>
+                        <span className={`font-medium ${productDetails.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                          {productDetails.status}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddProduct}
+                      className="mt-3 w-full px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-all text-sm"
+                    >
+                      Add Product Mapping
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
           {/* Actions */}
           <div className="flex gap-3 pt-4">
             <button
@@ -337,7 +535,12 @@ function BillerProductModal({ isOpen, onClose, onSave, product, mode }) {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2.5 bg-neutral-800 text-white rounded-md font-medium hover:bg-neutral-900 transition-all"
+              disabled={mode === 'create' && !formData.product_code}
+              className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all ${
+                mode === 'create' && !formData.product_code
+                  ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+                  : 'bg-neutral-800 text-white hover:bg-neutral-900'
+              }`}
             >
               {mode === 'create' ? 'Create' : 'Save Changes'}
             </button>

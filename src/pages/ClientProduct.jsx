@@ -18,6 +18,12 @@ const availableProducts = [
   { id: '019abe73-97b8-781c-be4c-8ce2997a2882', code: 'GENSHIN60', description: '60 Genesis Crystals' },
   { id: '019abe73-97b7-7085-8a0c-e262bb773a62', code: 'GENSHIN300', description: '300 Genesis Crystals' },
   { id: '019abe73-97b5-7a7b-8e38-5729ed18955f', code: 'VALORANT475', description: '475 VP' },
+  // Additional products without client products (for testing)
+  { id: '019abe73-97b4-7a1c-9e12-1234567890ab', code: 'MLBB1000', description: '1000 Diamonds' },
+  { id: '019abe73-97b3-7b2d-8f23-2345678901bc', code: 'FF500', description: '500 Diamonds' },
+  { id: '019abe73-97b2-7c3e-7g34-3456789012cd', code: 'PUBG600', description: '600 UC' },
+  { id: '019abe73-97b1-7d4f-6h45-4567890123de', code: 'GENSHIN980', description: '980 Genesis Crystals' },
+  { id: '019abe73-97b0-7e5g-5i56-5678901234ef', code: 'VALORANT1000', description: '1000 VP' },
 ]
 
 // Initial client products data based on the screenshot
@@ -181,7 +187,7 @@ function SortableHeader({ label, field, sortConfig, onSort, align = 'left' }) {
   )
 }
 
-function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, existingProductIds }) {
+function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, existingClientProducts }) {
   const [formData, setFormData] = useState({
     client_id: '18428781-cb86-40b2-a78d-98a040120f79',
     product_id: '',
@@ -190,10 +196,12 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
     config: '{}',
   })
 
-  // Filter out products that are already added
-  const availableProductsFiltered = mode === 'create' 
-    ? availableProducts.filter(p => !existingProductIds.includes(p.id))
-    : availableProducts
+  // Product lookup state
+  const [productCodeInput, setProductCodeInput] = useState('')
+  const [isCheckingProduct, setIsCheckingProduct] = useState(false)
+  const [productDetails, setProductDetails] = useState(null)
+  const [checkError, setCheckError] = useState('')
+
 
   useEffect(() => {
     if (isOpen) {
@@ -205,6 +213,16 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
           status: clientProduct.status,
           config: clientProduct.config,
         })
+        // Reset product lookup state and show existing product
+        const existingProduct = availableProducts.find(p => p.id === clientProduct.product_id)
+        if (existingProduct) {
+          setProductCodeInput(existingProduct.code)
+          setProductDetails(existingProduct)
+        } else {
+          setProductCodeInput('')
+          setProductDetails(null)
+        }
+        setCheckError('')
       } else {
         setFormData({
           client_id: '18428781-cb86-40b2-a78d-98a040120f79',
@@ -213,6 +231,9 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
           status: 'non_active',
           config: '{}',
         })
+        setProductCodeInput('')
+        setProductDetails(null)
+        setCheckError('')
       }
     }
   }, [isOpen, clientProduct, mode])
@@ -223,6 +244,64 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
       ...prev,
       [name]: name === 'price' ? (value === '' ? '' : Number(value)) : value
     }))
+  }
+
+  const handleProductCodeInputChange = (e) => {
+    setProductCodeInput(e.target.value)
+    setProductDetails(null)
+    setCheckError('')
+    // Clear the product_id in formData when input changes
+    setFormData(prev => ({ ...prev, product_id: '' }))
+  }
+
+  const handleCheckProduct = async () => {
+    if (!productCodeInput.trim()) {
+      setCheckError('Please enter a product code')
+      return
+    }
+
+    setIsCheckingProduct(true)
+    setCheckError('')
+    setProductDetails(null)
+
+    // Simulate API call
+    setTimeout(() => {
+      const foundProduct = availableProducts.find(
+        p => p.code.toLowerCase() === productCodeInput.trim().toLowerCase()
+      )
+
+      if (foundProduct) {
+        // Check if this product is already added for the selected client (composite key: client_id + product_id)
+        const isDuplicate = existingClientProducts.some(
+          cp => cp.client_id === formData.client_id && cp.product_id === foundProduct.id
+        )
+        
+        if (isDuplicate && mode === 'create') {
+          setCheckError('This product is already added for this client')
+          setProductDetails(null)
+        } else {
+          setProductDetails(foundProduct)
+          setCheckError('')
+        }
+      } else {
+        setCheckError('Product not found')
+        setProductDetails(null)
+      }
+      setIsCheckingProduct(false)
+    }, 500)
+  }
+
+  const handleAddProduct = () => {
+    if (productDetails) {
+      setFormData(prev => ({ ...prev, product_id: productDetails.id }))
+    }
+  }
+
+  const handleRemoveProduct = () => {
+    setFormData(prev => ({ ...prev, product_id: '' }))
+    setProductCodeInput('')
+    setProductDetails(null)
+    setCheckError('')
   }
 
   const handleSubmit = (e) => {
@@ -236,8 +315,8 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-neutral-200">
-        <div className="bg-neutral-800 px-6 py-4">
+      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-neutral-200 max-h-[90vh] overflow-y-auto">
+        <div className="bg-neutral-800 px-6 py-4 sticky top-0">
           <h2 className="text-xl font-semibold text-neutral-100">
             {mode === 'create' ? 'Create Client Product' : 'Edit Client Product'}
           </h2>
@@ -257,21 +336,6 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
                 <option key={id} value={id}>{name}</option>
               ))}
             </select>
-          </div>
-
-          {/* Product ID */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Product ID</label>
-            <input
-              type="text"
-              name="product_id"
-              value={formData.product_id}
-              onChange={handleChange}
-              placeholder="Enter product ID..."
-              required
-              disabled={mode === 'edit'}
-              className={`w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all ${mode === 'edit' ? 'bg-neutral-100 cursor-not-allowed' : ''}`}
-            />
           </div>
 
           {/* Price */}
@@ -314,6 +378,132 @@ function ClientProductModal({ isOpen, onClose, onSave, clientProduct, mode, exis
               rows={3}
               className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all font-mono text-sm"
             />
+          </div>
+
+          {/* Separator */}
+          <hr className="border-neutral-200" />
+
+          {/* Product Mapping Section */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+              Map to Product {mode === 'create' && <span className="text-red-500">*</span>}
+            </label>
+            <p className="text-xs text-neutral-500 mb-3">Link this client product to a product</p>
+            
+            {formData.product_id ? (
+              // Show selected product
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium text-green-800">Product Mapped</span>
+                  </div>
+                  {mode === 'create' && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveProduct}
+                      className="text-xs text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Product Code:</span>
+                    <span className="font-medium text-neutral-800">{productDetails?.code || getProductCode(formData.product_id)}</span>
+                  </div>
+                  {productDetails && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-600">Description:</span>
+                      <span className="font-medium text-neutral-800">{productDetails.description}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Product ID:</span>
+                    <span className="font-medium text-neutral-800 font-mono text-xs">{formData.product_id}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Show product lookup form
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={productCodeInput}
+                    onChange={handleProductCodeInputChange}
+                    placeholder="Enter product code..."
+                    className="flex-1 px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCheckProduct}
+                    disabled={isCheckingProduct || !productCodeInput.trim()}
+                    className={`px-4 py-2.5 rounded-md font-medium transition-all flex items-center gap-2 ${
+                      isCheckingProduct || !productCodeInput.trim()
+                        ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {isCheckingProduct ? (
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    Check
+                  </button>
+                </div>
+                {checkError && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {checkError}
+                  </p>
+                )}
+
+                {/* Product Details (shown when found) */}
+                {productDetails && !formData.product_id && (
+                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-medium text-green-800">Product Found</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Product Code:</span>
+                        <span className="font-medium text-neutral-800">{productDetails.code}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Description:</span>
+                        <span className="font-medium text-neutral-800">{productDetails.description}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Product ID:</span>
+                        <span className="font-medium text-neutral-800 font-mono text-xs">{productDetails.id}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddProduct}
+                      className="mt-3 w-full px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-all text-sm"
+                    >
+                      Add Product Mapping
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Actions */}
@@ -595,7 +785,6 @@ function ClientProduct() {
     return result
   }, [clientProducts, filters, sortConfig])
 
-  const existingProductIds = clientProducts.map(cp => cp.product_id)
 
   const openCreateModal = () => {
     setModalMode('create')
@@ -859,7 +1048,7 @@ function ClientProduct() {
         onSave={handleSave}
         clientProduct={editingProduct}
         mode={modalMode}
-        existingProductIds={existingProductIds}
+        existingClientProducts={clientProducts}
       />
 
       {/* Delete Confirmation Modal */}

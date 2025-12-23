@@ -42,6 +42,12 @@ function App() {
           >
             View GGS Products
           </Link>
+          <Link 
+            to="/upcoming-biller-product" 
+            className="px-6 py-3 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition-colors border border-neutral-700"
+          >
+            View Upcoming Biller Products
+          </Link>
         </div>
       </div>
     </div>
