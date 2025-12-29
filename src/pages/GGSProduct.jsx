@@ -325,6 +325,21 @@ function DynamicJsonEditor({ data, onChange, path = [] }) {
   )
 }
 
+const DEFAULT_PRODUCT_CONFIG = {
+  ui_config: {
+    icon: '',
+    mobile_img: '',
+    inquiry_form: [],
+    topup_guideline: [{ description: '' }],
+    topup_description: '',
+    is_inquiry_enabled: false,
+    check_your_id_guideline: [{ description: '' }],
+    product_items_categories: []
+  },
+  high_traffic_mode: false,
+  blacklist_payment_methods: []
+}
+
 function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
   const [activeTab, setActiveTab] = useState('basic')
   const [formData, setFormData] = useState({
@@ -336,14 +351,12 @@ function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
     currency: 'IDR',
     category: 'topup',
     slug: '',
-    product_config: '{}',
+    product_config: JSON.stringify(DEFAULT_PRODUCT_CONFIG),
     score: 0,
   })
-  const [configData, setConfigData] = useState({})
-  const [previewImage, setPreviewImage] = useState('')
-  const [isDragging, setIsDragging] = useState(false)
+  const [configData, setConfigData] = useState(DEFAULT_PRODUCT_CONFIG)
   const [advancedMode, setAdvancedMode] = useState(false)
-  const [jsonText, setJsonText] = useState('{}')
+  const [jsonText, setJsonText] = useState(JSON.stringify(DEFAULT_PRODUCT_CONFIG, null, 2))
   const [jsonError, setJsonError] = useState('')
 
   useEffect(() => {
@@ -364,7 +377,6 @@ function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
           product_config: product.product_config,
           score: product.score,
         })
-        setPreviewImage(product.image)
         try {
           const parsed = JSON.parse(product.product_config || '{}')
           setConfigData(parsed)
@@ -383,12 +395,11 @@ function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
           currency: 'IDR',
           category: 'topup',
           slug: '',
-          product_config: '{}',
+          product_config: JSON.stringify(DEFAULT_PRODUCT_CONFIG),
           score: 0,
         })
-        setPreviewImage('')
-        setConfigData({})
-        setJsonText('{}')
+        setConfigData(DEFAULT_PRODUCT_CONFIG)
+        setJsonText(JSON.stringify(DEFAULT_PRODUCT_CONFIG, null, 2))
       }
     }
   }, [isOpen, product, mode])
@@ -411,49 +422,6 @@ function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
       current[path[path.length - 1]] = newValue
       return newData
     })
-  }
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64 = reader.result
-        setFormData(prev => ({ ...prev, image: base64 }))
-        setPreviewImage(base64)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64 = reader.result
-        setFormData(prev => ({ ...prev, image: base64 }))
-        setPreviewImage(base64)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, image: '' }))
-    setPreviewImage('')
   }
 
   const handleSubmit = (e) => {
@@ -541,52 +509,28 @@ function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
                 />
               </div>
 
-              {/* Image Upload */}
+              {/* Image URL */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Image</label>
-                
-                {previewImage ? (
-                  <div className="relative inline-block">
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Image URL</label>
+                <input
+                  type="text"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleChange}
+                  placeholder="https://example.com/image.png"
+                  className="w-full px-4 py-2.5 bg-white border border-neutral-300 rounded-md text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+                />
+                {formData.image && (
+                  <div className="mt-3">
+                    <p className="text-xs text-neutral-500 mb-2">Preview:</p>
                     <img 
-                      src={previewImage} 
+                      src={formData.image} 
                       alt="Preview" 
-                      className="w-32 h-32 object-cover rounded-lg border border-neutral-200"
+                      className="w-24 h-24 object-cover rounded-lg border border-neutral-200"
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
                     />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                    <p className="text-xs text-neutral-500 mt-2">Click × to remove and upload a new image</p>
-                  </div>
-                ) : (
-                  <div 
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all ${
-                      isDragging 
-                        ? 'border-neutral-500 bg-neutral-100' 
-                        : 'border-neutral-300 hover:border-neutral-400'
-                    }`}
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-neutral-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-sm text-neutral-600">
-                      <span className="font-medium text-neutral-700">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-neutral-400 mt-1">PNG, JPG, WEBP up to 5MB</p>
                   </div>
                 )}
               </div>
@@ -808,37 +752,6 @@ function GGSProductModal({ isOpen, onClose, onSave, product, mode }) {
   )
 }
 
-function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }) {
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      
-      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-sm mx-4 overflow-hidden border border-neutral-200">
-        <div className="p-6">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-neutral-800 text-center mb-2">Delete GGS Product</h3>
-          <p className="text-neutral-600 text-center text-sm mb-6">
-            Are you sure you want to delete <span className="font-medium">{itemName}</span>? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-neutral-100 text-neutral-600 rounded-md font-medium hover:bg-neutral-200 transition-colors border border-neutral-300">
-              Cancel
-            </button>
-            <button onClick={onConfirm} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-all">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function BulkUploadModal({ isOpen, onClose, onUpload, type }) {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -985,8 +898,6 @@ function GGSProduct() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
   const [editingProduct, setEditingProduct] = useState(null)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [deletingProduct, setDeletingProduct] = useState(null)
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false)
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false)
 
@@ -1075,21 +986,6 @@ function GGSProduct() {
   const closeModal = () => {
     setIsModalOpen(false)
     setEditingProduct(null)
-  }
-
-  const openDeleteModal = (product) => {
-    setDeletingProduct(product)
-    setIsDeleteModalOpen(true)
-  }
-
-  const closeDeleteModal = () => {
-    setIsDeleteModalOpen(false)
-    setDeletingProduct(null)
-  }
-
-  const handleDelete = () => {
-    setProducts(prev => prev.filter(p => p.id !== deletingProduct.id))
-    closeDeleteModal()
   }
 
   const handleSave = (formData) => {
@@ -1284,12 +1180,6 @@ function GGSProduct() {
                           >
                             Edit
                           </button>
-                          <button
-                            onClick={() => openDeleteModal(product)}
-                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded border border-red-200 hover:bg-red-100 transition-colors"
-                          >
-                            Delete
-                          </button>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-neutral-600 font-mono text-xs max-w-[150px] truncate" title={product.id}>{product.id}</td>
@@ -1360,13 +1250,6 @@ function GGSProduct() {
         mode={modalMode}
       />
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={closeDeleteModal}
-        onConfirm={handleDelete}
-        itemName={deletingProduct?.name}
-      />
 
       {/* Bulk Upload Modal */}
       <BulkUploadModal

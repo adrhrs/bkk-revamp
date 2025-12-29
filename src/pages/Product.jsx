@@ -401,48 +401,6 @@ function ProductModal({ isOpen, onClose, onSave, product, mode }) {
   )
 }
 
-function DeleteConfirmModal({ isOpen, onClose, onConfirm, productName }) {
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-sm mx-4 overflow-hidden border border-neutral-200">
-        <div className="p-6">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-neutral-800 text-center mb-2">Delete Product</h3>
-          <p className="text-neutral-600 text-center text-sm mb-6">
-            Are you sure you want to delete <span className="font-medium">{productName}</span>? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-neutral-100 text-neutral-600 rounded-md font-medium hover:bg-neutral-200 transition-colors border border-neutral-300"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirm}
-              className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-all"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function BulkUploadModal({ isOpen, onClose, onUpload, type }) {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -600,8 +558,6 @@ function Product() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
   const [editingProduct, setEditingProduct] = useState(null)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [deletingProduct, setDeletingProduct] = useState(null)
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false)
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false)
 
@@ -696,21 +652,6 @@ function Product() {
   const closeModal = () => {
     setIsModalOpen(false)
     setEditingProduct(null)
-  }
-
-  const openDeleteModal = (product) => {
-    setDeletingProduct(product)
-    setIsDeleteModalOpen(true)
-  }
-
-  const closeDeleteModal = () => {
-    setIsDeleteModalOpen(false)
-    setDeletingProduct(null)
-  }
-
-  const handleDelete = () => {
-    setProducts(prev => prev.filter(p => p.id !== deletingProduct.id))
-    closeDeleteModal()
   }
 
   const handleSave = (formData) => {
@@ -910,12 +851,6 @@ function Product() {
                             Edit
                           </button>
                           <button
-                            onClick={() => openDeleteModal(product)}
-                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded border border-red-200 hover:bg-red-100 transition-colors"
-                          >
-                            Delete
-                          </button>
-                          <button
                             onClick={() => openRouting(product)}
                             className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded border border-blue-200 hover:bg-blue-100 transition-colors"
                           >
@@ -966,13 +901,6 @@ function Product() {
         mode={modalMode}
       />
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={closeDeleteModal}
-        onConfirm={handleDelete}
-        productName={deletingProduct?.description || deletingProduct?.code}
-      />
 
       {/* Bulk Upload Modal */}
       <BulkUploadModal

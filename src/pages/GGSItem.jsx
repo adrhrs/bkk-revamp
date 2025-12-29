@@ -171,8 +171,6 @@ function GGSItemModal({ isOpen, onClose, onSave, item, mode, productId }) {
     margin_public: 4,
     auto_markup_status: false,
   })
-  const [isDragging, setIsDragging] = useState(false)
-  const [imagePreview, setImagePreview] = useState(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -194,7 +192,6 @@ function GGSItemModal({ isOpen, onClose, onSave, item, mode, productId }) {
           margin_public: pricing.margin_public || 4,
           auto_markup_status: pricing.auto_markup_status ?? false,
         })
-        setImagePreview(item.image || null)
       } else {
         setFormData({
           product_id: productId || '',
@@ -212,7 +209,6 @@ function GGSItemModal({ isOpen, onClose, onSave, item, mode, productId }) {
           margin_public: 4,
           auto_markup_status: false,
         })
-        setImagePreview(null)
       }
     }
   }, [isOpen, item, mode, productId])
@@ -227,49 +223,6 @@ function GGSItemModal({ isOpen, onClose, onSave, item, mode, productId }) {
           : value
       )
     }))
-  }
-
-  const handleImageDragOver = (e) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleImageDragLeave = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }
-
-  const handleImageDrop = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      handleImageFile(file)
-    }
-  }
-
-  const handleImageFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      handleImageFile(file)
-    }
-  }
-
-  const handleImageFile = (file) => {
-    // Create a preview URL for the image
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setImagePreview(reader.result)
-      // In a real app, you would upload the file to a server and get a URL back
-      // For now, we'll use the data URL as the image value
-      setFormData(prev => ({ ...prev, image: reader.result }))
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const removeImage = () => {
-    setImagePreview(null)
-    setFormData(prev => ({ ...prev, image: '' }))
   }
 
   const handleSubmit = (e) => {
@@ -315,52 +268,28 @@ function GGSItemModal({ isOpen, onClose, onSave, item, mode, productId }) {
             />
           </div>
 
-          {/* Image Upload */}
+          {/* Image URL */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Image</label>
-            {imagePreview ? (
-              <div className="relative inline-block">
+            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Image URL</label>
+            <input
+              type="text"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              placeholder="https://example.com/image.png"
+              className="w-full px-4 py-2.5 bg-white border border-neutral-300 rounded-md text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+            />
+            {formData.image && (
+              <div className="mt-3">
+                <p className="text-xs text-neutral-500 mb-2">Preview:</p>
                 <img 
-                  src={imagePreview} 
+                  src={formData.image} 
                   alt="Preview" 
-                  className="w-32 h-32 object-cover rounded-lg border border-neutral-200"
+                  className="w-24 h-24 object-cover rounded-lg border border-neutral-200"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                  }}
                 />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <div
-                onDragOver={handleImageDragOver}
-                onDragLeave={handleImageDragLeave}
-                onDrop={handleImageDrop}
-                className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all ${
-                  isDragging 
-                    ? 'border-neutral-500 bg-neutral-100' 
-                    : 'border-neutral-300 bg-white hover:border-neutral-400'
-                }`}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="space-y-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-sm text-neutral-600">
-                    <span className="font-medium text-neutral-700">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-neutral-500">PNG, JPG, GIF, or WEBP</p>
-                </div>
               </div>
             )}
           </div>
@@ -545,37 +474,6 @@ function GGSItemModal({ isOpen, onClose, onSave, item, mode, productId }) {
   )
 }
 
-function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }) {
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      
-      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-sm mx-4 overflow-hidden border border-neutral-200">
-        <div className="p-6">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-neutral-800 text-center mb-2">Delete GGS Item</h3>
-          <p className="text-neutral-600 text-center text-sm mb-6">
-            Are you sure you want to delete <span className="font-medium">{itemName}</span>? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-neutral-100 text-neutral-600 rounded-md font-medium hover:bg-neutral-200 transition-colors border border-neutral-300">
-              Cancel
-            </button>
-            <button onClick={onConfirm} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-all">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function BulkUploadModal({ isOpen, onClose, onUpload, type }) {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -725,8 +623,6 @@ function GGSItem() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create')
   const [editingItem, setEditingItem] = useState(null)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [deletingItem, setDeletingItem] = useState(null)
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false)
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false)
 
@@ -742,6 +638,8 @@ function GGSItem() {
     name: '',
     category: '',
     status: '',
+    static_price: '',
+    auto_markup_status: '',
   })
 
   // Filter items by product_id if provided in URL
@@ -768,7 +666,7 @@ function GGSItem() {
   }
 
   const clearFilters = () => {
-    setFilters({ name: '', category: '', status: '' })
+    setFilters({ name: '', category: '', status: '', static_price: '', auto_markup_status: '' })
   }
 
   const filteredAndSortedItems = useMemo(() => {
@@ -783,6 +681,20 @@ function GGSItem() {
     }
     if (filters.status) {
       result = result.filter(p => p.status === filters.status)
+    }
+    if (filters.static_price) {
+      result = result.filter(p => {
+        const pricing = parsePricing(p.pricing)
+        const isStatic = pricing.static_price ?? false
+        return filters.static_price === 'on' ? isStatic : !isStatic
+      })
+    }
+    if (filters.auto_markup_status) {
+      result = result.filter(p => {
+        const pricing = parsePricing(p.pricing)
+        const isAutoMarkup = pricing.auto_markup_status ?? false
+        return filters.auto_markup_status === 'on' ? isAutoMarkup : !isAutoMarkup
+      })
     }
 
     // Apply sorting
@@ -830,21 +742,6 @@ function GGSItem() {
   const closeModal = () => {
     setIsModalOpen(false)
     setEditingItem(null)
-  }
-
-  const openDeleteModal = (item) => {
-    setDeletingItem(item)
-    setIsDeleteModalOpen(true)
-  }
-
-  const closeDeleteModal = () => {
-    setIsDeleteModalOpen(false)
-    setDeletingItem(null)
-  }
-
-  const handleDelete = () => {
-    setItems(prev => prev.filter(p => p.id !== deletingItem.id))
-    closeDeleteModal()
   }
 
   const handleSave = (formData) => {
@@ -917,7 +814,7 @@ function GGSItem() {
     }))
   }
 
-  const hasActiveFilters = filters.name || filters.category || filters.status
+  const hasActiveFilters = filters.name || filters.category || filters.status || filters.static_price || filters.auto_markup_status
 
   // Get unique categories for filter dropdown
   const categories = [...new Set(baseItems.map(p => p.category))]
@@ -984,7 +881,7 @@ function GGSItem() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-xs font-medium text-neutral-500 mb-1">Name</label>
               <input
@@ -1021,6 +918,32 @@ function GGSItem() {
                 <option value="">All</option>
                 <option value="active">active</option>
                 <option value="non-active">non-active</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Is Static</label>
+              <select
+                name="static_price"
+                value={filters.static_price}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-neutral-300 transition-all"
+              >
+                <option value="">All</option>
+                <option value="on">On</option>
+                <option value="off">Off</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Auto Markup</label>
+              <select
+                name="auto_markup_status"
+                value={filters.auto_markup_status}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-neutral-300 transition-all"
+              >
+                <option value="">All</option>
+                <option value="on">On</option>
+                <option value="off">Off</option>
               </select>
             </div>
           </div>
@@ -1101,12 +1024,6 @@ function GGSItem() {
                                   className="px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded border border-neutral-300 hover:bg-neutral-200 transition-colors"
                                 >
                                   Edit
-                                </button>
-                                <button
-                                  onClick={() => openDeleteModal(item)}
-                                  className="px-2 py-1 text-xs font-medium text-red-700 bg-red-50 rounded border border-red-200 hover:bg-red-100 transition-colors"
-                                >
-                                  Del
                                 </button>
                               </>
                             )}
@@ -1264,13 +1181,6 @@ function GGSItem() {
         productId={productIdParam}
       />
 
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={closeDeleteModal}
-        onConfirm={handleDelete}
-        itemName={deletingItem?.name}
-      />
 
       {/* Bulk Upload Modal */}
       <BulkUploadModal

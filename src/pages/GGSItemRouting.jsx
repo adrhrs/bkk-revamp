@@ -27,14 +27,14 @@ const PRODUCT_CODES = {
 
 // Available product options for dropdown
 const availableProducts = [
-  { id: '019abe73-97c2-72e6-adbc-4a9f018a5afe', code: 'FF5', description: '5 Diamonds' },
-  { id: '019abe73-97c0-7c80-a19f-df123bec1806', code: 'FF10', description: '10 Diamonds' },
-  { id: '019abe73-97bf-77ca-a983-a28b32a022d0', code: 'FF20', description: '20 Diamonds' },
-  { id: '019abe73-97bd-7cf6-bff5-7d55bced8902', code: 'FF50', description: '50 Diamonds' },
-  { id: '019abe73-97bc-74e4-a59f-c3c4ae9406e8', code: 'FF100', description: '100 Diamonds' },
-  { id: '019abe73-97bb-71af-bd5b-dd830d309de7', code: 'FF200', description: '200 Diamonds' },
-  { id: '019abe73-97b9-7c05-960c-444770df2e6f', code: 'FF500', description: '500 Diamonds' },
-  { id: '019abe73-97b8-781c-be4c-8ce2997a2882', code: 'FF1000', description: '1000 Diamonds' },
+  { id: '019abe73-97c2-72e6-adbc-4a9f018a5afe', code: 'FF5', description: '5 Diamonds', price: 5500, status: 'active' },
+  { id: '019abe73-97c0-7c80-a19f-df123bec1806', code: 'FF10', description: '10 Diamonds', price: 11000, status: 'active' },
+  { id: '019abe73-97bf-77ca-a983-a28b32a022d0', code: 'FF20', description: '20 Diamonds', price: 22000, status: 'non-active' },
+  { id: '019abe73-97bd-7cf6-bff5-7d55bced8902', code: 'FF50', description: '50 Diamonds', price: 55000, status: 'active' },
+  { id: '019abe73-97bc-74e4-a59f-c3c4ae9406e8', code: 'FF100', description: '100 Diamonds', price: 110000, status: 'active' },
+  { id: '019abe73-97bb-71af-bd5b-dd830d309de7', code: 'FF200', description: '200 Diamonds', price: 220000, status: 'non-active' },
+  { id: '019abe73-97b9-7c05-960c-444770df2e6f', code: 'FF500', description: '500 Diamonds', price: 550000, status: 'active' },
+  { id: '019abe73-97b8-781c-be4c-8ce2997a2882', code: 'FF1000', description: '1000 Diamonds', price: 1100000, status: 'active' },
 ]
 
 // Initial routing data
@@ -113,43 +113,31 @@ function SortableHeader({ label, field, sortConfig, onSort, align = 'left', clas
 }
 
 function RoutingModal({ isOpen, onClose, onSave, itemId }) {
-  const [formData, setFormData] = useState({
-    biller_product_code: '',
-    biller_price: 0,
-    status: 'active',
-  })
+  const [productCodeInput, setProductCodeInput] = useState('')
   const [isChecking, setIsChecking] = useState(false)
   const [productDetails, setProductDetails] = useState(null)
   const [checkError, setCheckError] = useState('')
+  const [isProductAdded, setIsProductAdded] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        biller_product_code: '',
-        biller_price: 0,
-        status: 'active',
-      })
+      setProductCodeInput('')
       setProductDetails(null)
       setCheckError('')
+      setIsProductAdded(false)
     }
   }, [isOpen])
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'biller_price' ? Number(value) : value
-    }))
-    // Reset product details when code changes
-    if (name === 'biller_product_code') {
-      setProductDetails(null)
-      setCheckError('')
-    }
+  const handleProductCodeChange = (e) => {
+    setProductCodeInput(e.target.value)
+    setProductDetails(null)
+    setCheckError('')
+    setIsProductAdded(false)
   }
 
   const handleCheckProduct = async () => {
-    if (!formData.biller_product_code.trim()) {
-      setCheckError('Please enter a biller product code')
+    if (!productCodeInput.trim()) {
+      setCheckError('Please enter a product code')
       return
     }
 
@@ -161,7 +149,7 @@ function RoutingModal({ isOpen, onClose, onSave, itemId }) {
     setTimeout(() => {
       // Check if the code exists in available products
       const foundProduct = availableProducts.find(
-        p => p.code.toLowerCase() === formData.biller_product_code.trim().toLowerCase()
+        p => p.code.toLowerCase() === productCodeInput.trim().toLowerCase()
       )
 
       if (foundProduct) {
@@ -169,25 +157,39 @@ function RoutingModal({ isOpen, onClose, onSave, itemId }) {
           id: foundProduct.id,
           code: foundProduct.code,
           description: foundProduct.description,
-          price: Math.floor(Math.random() * 100000) + 1000, // Simulated price
+          price: foundProduct.price,
+          status: foundProduct.status,
         })
         setCheckError('')
       } else {
-        setCheckError('Biller product not found')
+        setCheckError('Product not found')
         setProductDetails(null)
       }
       setIsChecking(false)
     }, 500)
   }
 
+  const handleAddProduct = () => {
+    if (productDetails) {
+      setIsProductAdded(true)
+    }
+  }
+
+  const handleRemoveProduct = () => {
+    setIsProductAdded(false)
+    setProductDetails(null)
+    setProductCodeInput('')
+    setCheckError('')
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!productDetails) return
+    if (!productDetails || !isProductAdded) return
     
     onSave({
       biller_product_id: productDetails.id,
-      biller_price: formData.biller_price,
-      status: formData.status,
+      biller_price: productDetails.price,
+      status: productDetails.status === 'active' ? 'active' : 'non-active',
       product_item_id: itemId,
     })
   }
@@ -200,7 +202,7 @@ function RoutingModal({ isOpen, onClose, onSave, itemId }) {
       
       <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-neutral-200">
         <div className="bg-neutral-800 px-6 py-4">
-          <h2 className="text-xl font-semibold text-neutral-100">Add Routing</h2>
+          <h2 className="text-xl font-semibold text-neutral-100">Add Bundling</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-white">
@@ -216,103 +218,133 @@ function RoutingModal({ isOpen, onClose, onSave, itemId }) {
             />
           </div>
 
-          {/* Biller Product Code */}
+          {/* Product Code / Client Product Code */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Biller Product Code</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                name="biller_product_code"
-                value={formData.biller_product_code}
-                onChange={handleChange}
-                placeholder="Enter biller product code..."
-                className="flex-1 px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
-              />
-              <button
-                type="button"
-                onClick={handleCheckProduct}
-                disabled={isChecking || !formData.biller_product_code.trim()}
-                className={`px-4 py-2.5 rounded-md font-medium transition-all flex items-center gap-2 ${
-                  isChecking || !formData.biller_product_code.trim()
-                    ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {isChecking ? (
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Product Code / Client Product Code</label>
+            <p className="text-xs text-neutral-500 mb-3">Link this item to a single / multiple client product</p>
+            
+            {isProductAdded && productDetails ? (
+              // Show selected product
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium text-green-800">Product Mapped</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveProduct}
+                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Code:</span>
+                    <span className="font-medium text-neutral-800">{productDetails.code}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Description:</span>
+                    <span className="font-medium text-neutral-800">{productDetails.description}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Price:</span>
+                    <span className="font-medium text-neutral-800">Rp {formatPrice(productDetails.price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Status:</span>
+                    <span className={`font-medium ${productDetails.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                      {productDetails.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Show product lookup form
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={productCodeInput}
+                    onChange={handleProductCodeChange}
+                    placeholder="Enter product code..."
+                    className="flex-1 px-4 py-2.5 bg-neutral-50 border border-neutral-300 rounded-md text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCheckProduct}
+                    disabled={isChecking || !productCodeInput.trim()}
+                    className={`px-4 py-2.5 rounded-md font-medium transition-all flex items-center gap-2 ${
+                      isChecking || !productCodeInput.trim()
+                        ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {isChecking ? (
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    Check
+                  </button>
+                </div>
+                {checkError && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {checkError}
+                  </p>
                 )}
-                Check
-              </button>
-            </div>
-            {checkError && (
-              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {checkError}
-              </p>
+
+                {/* Product Details (shown when found but not yet added) */}
+                {productDetails && !isProductAdded && (
+                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm font-medium text-green-800">Product Found</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Code:</span>
+                        <span className="font-medium text-neutral-800">{productDetails.code}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Description:</span>
+                        <span className="font-medium text-neutral-800">{productDetails.description}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Price:</span>
+                        <span className="font-medium text-neutral-800">Rp {formatPrice(productDetails.price)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-neutral-600">Status:</span>
+                        <span className={`font-medium ${productDetails.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                          {productDetails.status}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddProduct}
+                      className="mt-3 w-full px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-all text-sm"
+                    >
+                      Add Product Mapping
+                    </button>
+                  </div>
+                )}
+              </>
             )}
-          </div>
-
-          {/* Product Details (shown when found) */}
-          {productDetails && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-              <div className="flex items-center gap-2 mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-sm font-medium text-green-800">Product Found</span>
-              </div>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-neutral-600">Code:</span>
-                  <span className="font-medium text-neutral-800">{productDetails.code}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-600">Description:</span>
-                  <span className="font-medium text-neutral-800">{productDetails.description}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-600">Price:</span>
-                  <span className="font-medium text-neutral-800">Rp {formatPrice(productDetails.price)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Biller Price */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Biller Price</label>
-            <input
-              type="number"
-              name="biller_price"
-              value={formData.biller_price}
-              onChange={handleChange}
-              min="0"
-              required
-              className="w-full px-4 py-2.5 bg-white border border-neutral-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
-            />
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 bg-white border border-neutral-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
-            >
-              <option value="active">active</option>
-              <option value="non-active">non-active</option>
-            </select>
           </div>
 
           {/* Actions */}
@@ -326,14 +358,14 @@ function RoutingModal({ isOpen, onClose, onSave, itemId }) {
             </button>
             <button
               type="submit"
-              disabled={!productDetails}
+              disabled={!isProductAdded}
               className={`flex-1 px-4 py-2.5 rounded-md font-medium transition-all ${
-                !productDetails
+                !isProductAdded
                   ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
                   : 'bg-neutral-800 text-white hover:bg-neutral-900'
               }`}
             >
-              Add Routing
+              Add Bundling
             </button>
           </div>
         </form>
@@ -471,7 +503,7 @@ function GGSItemRouting() {
               ← Back to Items
             </Link>
             <h1 className="text-xl font-semibold text-neutral-800">
-              GGS Item Routing {currentItemName && <span className="text-neutral-500">- {currentItemName}</span>}
+              GGS Item Bundling {currentItemName && <span className="text-neutral-500">- {currentItemName}</span>}
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -483,7 +515,7 @@ function GGSItemRouting() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                 </svg>
-                Add Routing
+                Add Bundling
               </button>
             )}
           </div>
